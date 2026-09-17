@@ -1,0 +1,234 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "FoodieRank API",
+    "version": "1.0.0",
+    "description": "API REST modular para el registro, calificación y ranking de restaurantes con autenticación JWT y transacciones nativas en MongoDB."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api/v1",
+      "description": "Servidor de Desarrollo Local (SemVer v1)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Ingresa el token JWT recibido en /auth/login con el prefijo Bearer"
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Registrar un nuevo usuario",
+        "tags": ["Autenticación"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nombre", "email", "password"],
+                "properties": {
+                  "nombre": { "type": "string", "example": "Daniel Borja" },
+                  "email": { "type": "string", "example": "daniel@foodierank.com" },
+                  "password": { "type": "string", "example": "Password123" },
+                  "rol": { "type": "string", "enum": ["usuario", "admin"], "example": "usuario" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Usuario registrado exitosamente" },
+          "400": { "description": "Datos inválidos o correo ya existente" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Iniciar sesión y obtener token JWT",
+        "tags": ["Autenticación"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "example": "daniel@foodierank.com" },
+                  "password": { "type": "string", "example": "Password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Autenticación exitosa y retorno del token Bearer" },
+          "401": { "description": "Credenciales inválidas" }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "summary": "Listar todas las categorías",
+        "tags": ["Categorías"],
+        "responses": {
+          "200": { "description": "Lista de categorías obtenida" }
+        }
+      },
+      "post": {
+        "summary": "Crear categoría (Solo Admin)",
+        "tags": ["Categorías"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nombre"],
+                "properties": {
+                  "nombre": { "type": "string", "example": "Gourmet" },
+                  "descripcion": { "type": "string", "example": "Platos de autor y alta cocina" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Categoría creada con éxito" },
+          "403": { "description": "Acceso denegado: requiere rol de admin" }
+        }
+      }
+    },
+    "/restaurants": {
+      "get": {
+        "summary": "Listar restaurantes aprobados con filtro opcional por categoría",
+        "tags": ["Restaurantes"],
+        "parameters": [
+          {
+            "name": "categoriaId",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Listado de restaurantes disponibles" }
+        }
+      },
+      "post": {
+        "summary": "Registrar un restaurante (queda pendiente si lo crea un usuario)",
+        "tags": ["Restaurantes"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nombre", "descripcion", "categoriaId", "ubicacion"],
+                "properties": {
+                  "nombre": { "type": "string", "example": "La Trattoria" },
+                  "descripcion": { "type": "string", "example": "Comida tradicional italiana" },
+                  "categoriaId": { "type": "string", "example": "64f1a2b3c4d5e6f7a8b9c0d1" },
+                  "ubicacion": { "type": "string", "example": "Zona 10, Ciudad de Guatemala" },
+                  "imagenUrl": { "type": "string", "example": "https://ejemplo.com/foto.jpg" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Restaurante creado" },
+          "400": { "description": "Nombre duplicado o categoría inválida" }
+        }
+      }
+    },
+    "/restaurants/{id}/approve": {
+      "patch": {
+        "summary": "Aprobar restaurante (Solo Admin)",
+        "tags": ["Restaurantes"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Restaurante aprobado" },
+          "403": { "description": "Requiere rol de admin" }
+        }
+      }
+    },
+    "/reviews": {
+      "post": {
+        "summary": "Crear reseña con transacción ACID y recálculo de ranking",
+        "tags": ["Reseñas"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["restauranteId", "calificacion", "comentario"],
+                "properties": {
+                  "restauranteId": { "type": "string", "example": "64f1a2b3c4d5e6f7a8b9c0d1" },
+                  "calificacion": { "type": "integer", "minimum": 1, "maximum": 5, "example": 5 },
+                  "comentario": { "type": "string", "example": "Excelente servicio y calidad de comida" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Reseña guardada y ranking actualizado" },
+          "400": { "description": "Error en datos o ya existe reseña previa" }
+        }
+      }
+    },
+    "/reviews/{id}/vote": {
+      "post": {
+        "summary": "Dar like o dislike a una reseña (transacción atómica)",
+        "tags": ["Reseñas"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["tipo"],
+                "properties": {
+                  "tipo": { "type": "string", "enum": ["like", "dislike"], "example": "like" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Voto registrado exitosamente" },
+          "400": { "description": "No se permite votar la propia reseña" }
+        }
+      }
+    }
+  }
+}
