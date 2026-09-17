@@ -9,6 +9,7 @@ Servicio backend modular desarrollado en **Node.js** y **Express**, responsable 
 El cliente web interactivo desarrollado en HTML5, CSS3 y JavaScript Vanilla se gestiona en un repositorio desacoplado:
 
 * **Repositorio Frontend:** [FoodieRank Frontend Web](https://github.com/jdanbo/foodierank-frontend.git)
+* * **Video Presentación:** [Video Drive](https://drive.google.com/drive/folders/14NkUhoAEqI5eM32O_M593R8yARzNK0_q?usp=drive_link)
 
 ---
 
@@ -55,10 +56,10 @@ foodierank-backend/
 
 ## Principios Aplicados
 
-* **Separación de Responsabilidades (SoC):** Desacoplamiento estricto entre la definición de rutas, validación de esquemas HTTP, lógica de controladores y acceso a la base de datos[cite: 3].
+* **Separación de Responsabilidades (SoC):** Desacoplamiento estricto entre la definición de rutas, validación de esquemas HTTP, lógica de controladores y acceso a la base de datos.
 * **Control de Acceso Basado en Roles (RBAC):** Capas intermedias que inspeccionan los permisos del usuario (`usuario` vs `admin`) impidiendo accesos no autorizados a operaciones de moderación y auditoría.
 * **Transacciones Multi-Documento (ACID):** Uso de sesiones transaccionales nativas (`session.withTransaction()`) para asegurar atomicidad e integridad en la inserción de opiniones y actualización simultánea de métricas[cite: 3].
-* **Defensa en Profundidad y Sanitización:** Validación rigurosa de tipos, longitudes y formatos mediante `express-validator` antes de que las peticiones alcancen las capas de datos[cite: 3].
+* **Defensa en Profundidad y Sanitización:** Validación rigurosa de tipos, longitudes y formatos mediante `express-validator` antes de que las peticiones alcancen las capas de datos.
 * **Versionado Semántico (SemVer):** Todas las rutas se exponen bajo el prefijo unificado `/api/v1/` garantizando retrocompatibilidad ante futuras iteraciones del servicio.
 
 ---
