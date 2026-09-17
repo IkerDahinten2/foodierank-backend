@@ -66,7 +66,7 @@ async function login(req, res) {
 
     res.json({
       ok: true,
-      token: `Bearer ${token}`,
+      token: token,
       user: {
         id: user._id,
         nombre: user.nombre,
