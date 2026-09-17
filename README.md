@@ -1,10 +1,10 @@
-# 🍽️ FoodieRank API — Backend & Servicio RESTful
+# FoodieRank API — Backend & Servicio RESTful
 
 Servicio backend modular desarrollado en **Node.js** y **Express**, responsable del procesamiento de negocio, persistencia de datos, seguridad, control de acceso y cálculo de rankings gastronómicos para la plataforma FoodieRank.
 
 ---
 
-## 🔗 Repositorio del Cliente (Frontend)
+## Repositorio del Cliente (Frontend)
 
 El cliente web interactivo desarrollado en HTML5, CSS3 y JavaScript Vanilla se gestiona en un repositorio desacoplado:
 
@@ -12,13 +12,13 @@ El cliente web interactivo desarrollado en HTML5, CSS3 y JavaScript Vanilla se g
 
 ---
 
-## 📋 Descripción del Proyecto
+## Descripción del Proyecto
 
 FoodieRank Backend es una API REST robusta que centraliza la administración gastronómica de restaurantes, platillos, categorías y reseñas comunitarias en Guatemala. Incorpora autenticación mediante tokens criptográficos, un modelo relacional referenciado sobre bases de datos de documentos y un algoritmo de cálculo de popularidad respaldado por transacciones multi-documento reales.
 
 ---
 
-## 🏛️ Estructura del Proyecto
+## Estructura del Proyecto
 
 La arquitectura sigue una separación estricta de responsabilidades por capas:
 
@@ -53,7 +53,7 @@ foodierank-backend/
 
 ---
 
-## 🧠 Principios Aplicados
+## Principios Aplicados
 
 * **Separación de Responsabilidades (SoC):** Desacoplamiento estricto entre la definición de rutas, validación de esquemas HTTP, lógica de controladores y acceso a la base de datos[cite: 3].
 * **Control de Acceso Basado en Roles (RBAC):** Capas intermedias que inspeccionan los permisos del usuario (`usuario` vs `admin`) impidiendo accesos no autorizados a operaciones de moderación y auditoría.
@@ -63,7 +63,7 @@ foodierank-backend/
 
 ---
 
-## ⚙️ Consideraciones Técnicas
+## Consideraciones Técnicas
 
 * **Driver Nativo Oficial de MongoDB:** Se prescindió intencionalmente de librerías ODM de alto nivel como Mongoose[cite: 3]. Todas las consultas se ejecutan directamente contra `MongoClient`, manejando proyecciones, agregaciones complejas y cursores nativos[cite: 3].
 * **Resiliencia de Red en Atlas:** Soporte para conectividad a través de cadenas con nodos de réplica y puertos explícitos (`:27017`), solventando bloqueos de resolución DNS sobre registros SRV en redes corporativas o de campus.
@@ -72,7 +72,7 @@ foodierank-backend/
 
 ---
 
-## 🚀 Instrucciones de Instalación y Uso
+## Instrucciones de Instalación y Uso
 
 ### 1. Clonar e Instalar Dependencias
 git clone https://github.com/IkerDahinten2/foodierank-backend.git
@@ -106,7 +106,7 @@ http://localhost:3000/api/v1/docs
 
 ---
 
-## 👥 Créditos
+## Créditos
 
 Proyecto desarrollado en equipo:
 * **Daniel Borja** **Mauricio Dahinten** — Desarrolladores Backend & Arquitectura de Datos
