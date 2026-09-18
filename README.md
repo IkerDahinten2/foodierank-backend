@@ -13,6 +13,13 @@ El cliente web interactivo desarrollado en HTML5, CSS3 y JavaScript Vanilla se g
 
 ---
 
+## Documentación del Proyecto y Gestión Scrum
+
+La planificación, el seguimiento de historias de usuario, los sprints y la documentación del marco de trabajo Scrum se encuentran centralizados en el siguiente documento:
+
+* **Documentación Scrum (Google Sheets):** [Enlace al Documento de Google Sheets](https://docs.google.com/document/d/1ZdPrpuVyVtcwK9uh6lvDYAOt5dmnCqEglI8vPQoFpfU/edit?usp=sharing)
+---
+
 ## Descripción del Proyecto
 
 FoodieRank Backend es una API REST robusta que centraliza la administración gastronómica de restaurantes, platillos, categorías y reseñas comunitarias en Guatemala. Incorpora autenticación mediante tokens criptográficos, un modelo relacional referenciado sobre bases de datos de documentos y un algoritmo de cálculo de popularidad respaldado por transacciones multi-documento reales.
