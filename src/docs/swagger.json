@@ -19,6 +19,12 @@
         "bearerFormat": "JWT",
         "description": "Ingresa el token JWT recibido en /auth/login con el prefijo Bearer"
       }
+    },
+    "responses": {
+      "NotFound": { "description": "El recurso solicitado no existe" },
+      "Forbidden": { "description": "No tienes permisos para realizar esta acción" },
+      "Unauthorized": { "description": "No has iniciado sesión o el token no es válido" },
+      "ValidationError": { "description": "Los datos enviados no pasaron las validaciones" }
     }
   },
   "paths": {
@@ -36,8 +42,7 @@
                 "properties": {
                   "nombre": { "type": "string", "example": "Daniel Borja" },
                   "email": { "type": "string", "example": "daniel@foodierank.com" },
-                  "password": { "type": "string", "example": "Password123" },
-                  "rol": { "type": "string", "enum": ["usuario", "admin"], "example": "usuario" }
+                  "password": { "type": "string", "example": "Password123" }
                 }
               }
             }
@@ -45,7 +50,8 @@
         },
         "responses": {
           "201": { "description": "Usuario registrado exitosamente" },
-          "400": { "description": "Datos inválidos o correo ya existente" }
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "409": { "description": "El correo ya se encuentra registrado" }
         }
       }
     },
@@ -71,6 +77,17 @@
         "responses": {
           "200": { "description": "Autenticación exitosa y retorno del token Bearer" },
           "401": { "description": "Credenciales inválidas" }
+        }
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "summary": "Obtener el perfil del usuario autenticado (prueba de token)",
+        "tags": ["Autenticación"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Datos del usuario autenticado" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
         }
       }
     },
@@ -103,7 +120,53 @@
         },
         "responses": {
           "201": { "description": "Categoría creada con éxito" },
-          "403": { "description": "Acceso denegado: requiere rol de admin" }
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/categories/{id}": {
+      "get": {
+        "summary": "Obtener una categoría por ID",
+        "tags": ["Categorías"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Categoría encontrada" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "summary": "Actualizar categoría (Solo Admin)",
+        "tags": ["Categorías"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nombre"],
+                "properties": {
+                  "nombre": { "type": "string" },
+                  "descripcion": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Categoría actualizada exitosamente" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar categoría (Solo Admin)",
+        "tags": ["Categorías"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Categoría eliminada exitosamente" },
+          "404": { "$ref": "#/components/responses/NotFound" }
         }
       }
     },
@@ -112,12 +175,7 @@
         "summary": "Listar restaurantes aprobados con filtro opcional por categoría",
         "tags": ["Restaurantes"],
         "parameters": [
-          {
-            "name": "categoriaId",
-            "in": "query",
-            "required": false,
-            "schema": { "type": "string" }
-          }
+          { "name": "categoriaId", "in": "query", "required": false, "schema": { "type": "string" } }
         ],
         "responses": {
           "200": { "description": "Listado de restaurantes disponibles" }
@@ -147,26 +205,190 @@
         },
         "responses": {
           "201": { "description": "Restaurante creado" },
-          "400": { "description": "Nombre duplicado o categoría inválida" }
+          "400": { "description": "Categoría inválida" },
+          "409": { "description": "Nombre duplicado" }
+        }
+      }
+    },
+    "/restaurants/with-dish": {
+      "post": {
+        "summary": "Registrar un restaurante junto a su primer plato en una sola transacción",
+        "tags": ["Restaurantes"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nombre", "descripcion", "categoriaId", "ubicacion", "horario", "imagenUrl", "platoNombre", "platoDescripcion", "platoPrecio"],
+                "properties": {
+                  "nombre": { "type": "string" },
+                  "descripcion": { "type": "string" },
+                  "categoriaId": { "type": "string" },
+                  "ubicacion": { "type": "string" },
+                  "horario": { "type": "string", "example": "Lunes a domingo, 8:00 - 20:00" },
+                  "imagenUrl": { "type": "string" },
+                  "platoNombre": { "type": "string" },
+                  "platoDescripcion": { "type": "string" },
+                  "platoPrecio": { "type": "number", "example": 65.5 },
+                  "platoImagenUrl": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Restaurante y plato creados en una sola transacción ACID" },
+          "400": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/restaurants/mine": {
+      "get": {
+        "summary": "Listar los restaurantes creados por el usuario autenticado (cualquier estado)",
+        "tags": ["Restaurantes"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Restaurantes propios" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/restaurants/notifications/mine": {
+      "get": {
+        "summary": "Obtener y marcar como vistas las notificaciones de moderación del usuario",
+        "tags": ["Restaurantes"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Notificaciones pendientes de aviso" }
+        }
+      }
+    },
+    "/restaurants/admin/all": {
+      "get": {
+        "summary": "Listar TODOS los restaurantes sin filtrar por estado (Solo Admin)",
+        "tags": ["Restaurantes (Admin)"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Listado completo para panel admin" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/restaurants/admin/dishes/pending": {
+      "get": {
+        "summary": "Listar platos pendientes de moderación (Solo Admin)",
+        "tags": ["Restaurantes (Admin)"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Platos pendientes" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/restaurants/{id}": {
+      "get": {
+        "summary": "Obtener el detalle de un restaurante junto a sus platos aprobados",
+        "tags": ["Restaurantes"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Detalle del restaurante" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "summary": "Editar restaurante (Solo Admin)",
+        "tags": ["Restaurantes (Admin)"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Restaurante actualizado exitosamente" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar restaurante y todos sus platos/reseñas vinculados (Solo Admin)",
+        "tags": ["Restaurantes (Admin)"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Restaurante y datos vinculados eliminados" }
         }
       }
     },
     "/restaurants/{id}/approve": {
       "patch": {
         "summary": "Aprobar restaurante (Solo Admin)",
-        "tags": ["Restaurantes"],
+        "tags": ["Restaurantes (Admin)"],
         "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
         "responses": {
           "200": { "description": "Restaurante aprobado" },
-          "403": { "description": "Requiere rol de admin" }
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/restaurants/{id}/reject": {
+      "patch": {
+        "summary": "Rechazar restaurante (Solo Admin)",
+        "tags": ["Restaurantes (Admin)"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Restaurante rechazado" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/restaurants/{id}/dishes": {
+      "post": {
+        "summary": "Agregar un plato a un restaurante (dueño o admin)",
+        "tags": ["Restaurantes"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nombre", "descripcion", "precio"],
+                "properties": {
+                  "nombre": { "type": "string" },
+                  "descripcion": { "type": "string" },
+                  "precio": { "type": "number" },
+                  "imagenUrl": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Plato creado" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/restaurants/dishes/{dishId}/approve": {
+      "patch": {
+        "summary": "Aprobar plato (Solo Admin)",
+        "tags": ["Restaurantes (Admin)"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "dishId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Plato aprobado con éxito" }
+        }
+      }
+    },
+    "/restaurants/dishes/{dishId}/reject": {
+      "patch": {
+        "summary": "Rechazar plato (Solo Admin)",
+        "tags": ["Restaurantes (Admin)"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "dishId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Plato rechazado" }
         }
       }
     },
@@ -193,7 +415,17 @@
         },
         "responses": {
           "201": { "description": "Reseña guardada y ranking actualizado" },
-          "400": { "description": "Error en datos o ya existe reseña previa" }
+          "400": { "description": "Error en datos o restaurante no aprobado" }
+        }
+      }
+    },
+    "/reviews/restaurant/{id}": {
+      "get": {
+        "summary": "Listar las reseñas de un restaurante",
+        "tags": ["Reseñas"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Reseñas del restaurante" }
         }
       }
     },
@@ -202,14 +434,7 @@
         "summary": "Dar like o dislike a una reseña (transacción atómica)",
         "tags": ["Reseñas"],
         "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
         "requestBody": {
           "required": true,
           "content": {
@@ -226,7 +451,30 @@
         },
         "responses": {
           "200": { "description": "Voto registrado exitosamente" },
-          "400": { "description": "No se permite votar la propia reseña" }
+          "403": { "description": "No se permite votar la propia reseña" }
+        }
+      }
+    },
+    "/reviews/{id}": {
+      "delete": {
+        "summary": "Eliminar reseña (autor o admin) con recálculo transaccional del ranking",
+        "tags": ["Reseñas"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Reseña eliminada y ranking actualizado" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/reviews/admin/all": {
+      "get": {
+        "summary": "Listar todas las reseñas para moderación (Solo Admin)",
+        "tags": ["Reseñas (Admin)"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Todas las reseñas con autor y restaurante" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
         }
       }
     }
