@@ -22,6 +22,12 @@ async function ensureIndexes(db) {
   await db.collection('reviews').createIndex({ fechaCreacion: -1 }, { name: 'by_fecha_desc' });
 
   console.log('Índices de MongoDB verificados/creados correctamente');
+
+  await db.collection('favoritos').createIndex({ favoritoId: 1 }, { name: 'by_favorito' });
+  await db.collection('favoritos').createIndex({ restauranteId: 1 }, { name: 'by_restaurante' });
+  await db.collection('favoritos').createIndex({ restauranteId: 1 }, { name: 'by_restaurante' });
+  await db.collection('favoritos').createIndex({ usuarioId: 1 }, { name: 'by_usuario' });
+
 }
 
 module.exports = { ensureIndexes };

@@ -1,0 +1,158 @@
+Favoritos de usuario
+Instrucciones: 
+
+Complementar el sistema en Express donde los usuarios puedan:
+
+    Añadir restaurantes y platos a favoritos.
+    Quitar restaurantes y platos de favoritos.
+    Listar todos sus favoritos.
+
+
+El sistema debe:
+
+    Almacenar la relación usuario–favoritos en la base de datos.
+    Evitar duplicados (un mismo usuario no puede añadir dos veces el mismo favorito).
+    Responder siempre en JSON estructurado con mensajes claros de éxito o error.
+
+
+No se debe implementar nada en frontend, solo endpoints.
+
+Entendimiento de Examen
+1. Especificamente backend, no se calificara el front. 
+2. No se requiere configuraciones o cambios en el front.
+3. Un solo commit funcional en la rama propia
+    Un commit funcional en el repositorio del proyecto que cumpla con los requisitos planteados.
+    Dentro de rama: examen_borja_daniel
+
+4. Si seguimos el funcionamiento normal es: 
+//comentario: recordar seguir el flujo de platos al momento de ser incluidos dentro de restaurantes. 
+
+modificar controllers - favoritos.controller.js
+
+    //Añadir restaurantes y platos a favoritos
+    //Modificar 
+
+        const createRestaurant = catchAsync(async (req, res) => {
+            const { estado, data } = await restaurantService.create(req.body, req.user);
+            res.status(201).json({
+            ok: true,
+            message: estado === 'aprobado' ? 'Restaurante creado y aprobado' : 'Restaurante registrado, pendiente de moderación por un administrador',
+            data
+            });
+        });
+
+    //Quitar restaurantes y platos a favoritos
+    //Modificar 
+
+        const deleteRestaurant = catchAsync(async (req, res) => {
+        await restaurantService.delete(req.params.id);
+        res.json({ ok: true, message: 'Restaurante y datos vinculados eliminados' });
+        });
+
+
+    //Listar con GET
+
+        const getMyRestaurants = catchAsync(async (req, res) => {
+        const data = await restaurantService.getMine(req.user._id);
+        res.json({ ok: true, data });
+        });
+
+    //Exportar al final
+        module.exports = {
+
+        }
+
+
+Crear indices para favoritos
+
+  await db.collection('reviews').createIndex({ fechaCreacion: -1 }, { name: 'by_fecha_desc' });
+
+
+rutas de favoritos
+    //Siguiendo el flujo de restaurantes
+    //No se necesita la confirmacion de administrador
+
+        const express = require('express');
+        const router = express.Router();
+
+        const {
+        getRestaurants,
+        getRestaurantById,
+        createRestaurant,
+        createRestaurantAndDish,
+        getMyRestaurants,
+        approveRestaurant,
+        rejectRestaurant,
+        createDish,
+        approveDish,
+        rejectDish,
+        getAllRestaurantsAdmin,
+        updateRestaurant,
+        deleteRestaurant,
+        getPendingDishes,
+        getMyNotifications
+        } = require('../../controllers/restaurant.controller');
+
+        const { requireAuth, requireRole } = require('../../middlewares/auth.middleware');
+        const {
+        validateRestaurantBody,
+        validateRestaurantWithDishBody,
+        validateDishBody,
+        validateId
+        } = require('../../middlewares/restaurantValidators');
+
+        // Rutas Públicas
+        router.get('/', getRestaurants);
+
+        // Rutas Administrativas (Declaradas ANTES de /:id para evitar colisiones de rutas)
+        router.get('/admin/all', requireAuth, requireRole('admin'), getAllRestaurantsAdmin);
+        router.get('/admin/dishes/pending', requireAuth, requireRole('admin'), getPendingDishes);
+
+        // Rutas de Usuario Autenticado con segmento fijo (también ANTES de /:id)
+        router.get('/mine', requireAuth, getMyRestaurants);
+        router.get('/notifications/mine', requireAuth, getMyNotifications);
+        router.post('/with-dish', requireAuth, validateRestaurantWithDishBody, createRestaurantAndDish);
+
+        //Proceso especifico de usuario autenticado de review
+        // Rutas de Usuario Autenticado
+        router.post('/', requireAuth, validateCreateReview, createReview);
+        router.post('/:id/vote', requireAuth, validateVote, voteReview);
+        router.delete('/:id', requireAuth, validateReviewId, deleteReview);
+
+        module.exports = router;
+
+        router.patch('/:id/approve', requireAuth, requireRole('admin'), validateId('id'), approveRestaurant);
+        router.patch('/:id/reject', requireAuth, requireRole('admin'), validateId('id'), rejectRestaurant);
+        router.patch('/dishes/:dishId/approve', requireAuth, requireRole('admin'), validateId('dishId'), approveDish);
+        router.patch('/dishes/:dishId/reject', requireAuth, requireRole('admin'), validateId('dishId'), rejectDish);
+        router.put('/:id', requireAuth, requireRole('admin'), validateId('id'), updateRestaurant);
+        router.delete('/:id', requireAuth, requireRole('admin'), validateId('id'), deleteRestaurant);
+
+        // Rutas de Detalle y Creación
+        router.get('/:id', validateId('id'), getRestaurantById);
+        router.post('/', requireAuth, validateRestaurantBody, createRestaurant);
+        router.post('/:id/dishes', requireAuth, validateId('id'), validateDishBody, createDish);
+
+        module.exports = router;
+
+
+importar desde server
+
+    const restaurantRoutes = require('./src/routes/v1/restaurant.routes');
+
+    //importacion al principio del modulo
+        // Importación de rutas versionadas
+        const authRoutes = require('./src/routes/v1/auth.routes');
+        const categoryRoutes = require('./src/routes/v1/category.routes');
+        const restaurantRoutes = require('./src/routes/v1/restaurant.routes');
+        const reviewRoutes = require('./src/routes/v1/review.routes');
+
+    app.use('/api/favoritos', favoritosRoutes);
+
+
+incluir la ruta y middleware
+
+    favoritoValidator.js
+
+    
+

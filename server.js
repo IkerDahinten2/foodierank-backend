@@ -18,6 +18,8 @@ const authRoutes = require('./src/routes/v1/auth.routes');
 const categoryRoutes = require('./src/routes/v1/category.routes');
 const restaurantRoutes = require('./src/routes/v1/restaurant.routes');
 const reviewRoutes = require('./src/routes/v1/review.routes');
+const favoritesRoutes = require('./src/routes/v1/favorites.routes');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,6 +46,7 @@ app.use(`/api/${API_VERSION}/auth`, authRoutes);
 app.use(`/api/${API_VERSION}/categories`, categoryRoutes);
 app.use(`/api/${API_VERSION}/restaurants`, restaurantRoutes);
 app.use(`/api/${API_VERSION}/reviews`, reviewRoutes);
+app.use(`/api/${API_VERSION}/reviews`, favoritesRoutes);
 
 // Endpoint de prueba de salud (expone también la versión de la API, no solo del package.json)
 app.get(`/api/${API_VERSION}/health`, (req, res) => {
